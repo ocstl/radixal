@@ -31,7 +31,7 @@ pub struct DigitsIterator<T: UnsignedInteger> {
 impl<T: UnsignedInteger> DigitsIterator<T> {
     /// Create a new `DigitsIterator` for `number` using `radix`.
     ///
-    /// Returns an `Err(RadixError)` if the radix is `0` is `1` (not yet implemented).
+    /// Returns an `Err(RadixError)` if the radix is `0` is `1`.
     pub fn new(number: T, radix: T) -> Result<DigitsIterator<T>, RadixError> {
         if radix == T::ZERO {
             return Err(RadixError::Radix0);
