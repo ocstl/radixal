@@ -4,8 +4,8 @@
 #![no_std]
 
 pub mod digits;
+pub mod traits;
 
-use core::ops::{Div, Mul, Rem};
 use digits::{DigitsIterator, RadixError};
 
 /// An extension trait on unsigned integer types (`u8`, `u16`, `u32`, `u64`, `u128` and `usize`).
@@ -25,10 +25,12 @@ use digits::{DigitsIterator, RadixError};
 /// assert_eq!(digits.next(), Some(3));
 /// assert_eq!(digits.next(), None);
 /// ```
-pub trait AsDigits:
-    Copy + PartialOrd + Mul<Output = Self> + Div<Output = Self> + Rem<Output = Self>
-{
+pub trait AsDigits: traits::UnsignedInteger {
     fn into_digits(self, radix: Self) -> Result<DigitsIterator<Self>, RadixError>;
+
+    fn to_digits(&self, radix: Self) -> Result<DigitsIterator<Self>, RadixError> {
+        self.into_digits(radix)
+    }
 }
 
 macro_rules! impl_digits {
@@ -99,5 +101,15 @@ mod tests {
         assert_eq!(digits.next_back(), Some(3));
         assert_eq!(digits.next(), Some(2));
         assert_eq!(digits.next_back(), None);
+    }
+
+    #[test]
+    fn test_to_digits() {
+        let mut digits = 123_u32.to_digits(10).unwrap();
+
+        assert_eq!(digits.next(), Some(1));
+        assert_eq!(digits.next(), Some(2));
+        assert_eq!(digits.next(), Some(3));
+        assert_eq!(digits.next(), None);
     }
 }

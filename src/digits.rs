@@ -1,4 +1,4 @@
-use core::ops::{Div, Mul, Rem};
+use crate::traits::UnsignedInteger;
 
 #[derive(Debug)]
 pub enum RadixError {
@@ -21,26 +21,20 @@ pub enum RadixError {
 /// assert_eq!(digits.next(), None);
 /// ```
 #[derive(Clone, Debug)]
-pub struct DigitsIterator<T>
-where
-    T: Copy + PartialOrd + Mul<Output = T> + Div<Output = T> + Rem<Output = T>,
-{
+pub struct DigitsIterator<T: UnsignedInteger> {
     current: T,
     radix: T,
     splitter: T,
     len: usize,
 }
 
-impl<T> DigitsIterator<T>
-where
-    T: Copy + PartialOrd + Mul<Output = T> + Div<Output = T> + Rem<Output = T>,
-{
+impl<T: UnsignedInteger> DigitsIterator<T> {
     /// Create a new `DigitsIterator` for `number` using `radix`.
     ///
     /// Returns an `Err(RadixError)` if the radix is `0` is `1` (not yet implemented).
     pub fn new(number: T, radix: T) -> Result<DigitsIterator<T>, RadixError> {
         let mut len = 1;
-        let mut splitter = radix / radix;
+        let mut splitter = T::ONE;
         let mut n = number;
 
         while n >= radix {
@@ -58,10 +52,7 @@ where
     }
 }
 
-impl<T> Iterator for DigitsIterator<T>
-where
-    T: Copy + PartialOrd + Mul<Output = T> + Div<Output = T> + Rem<Output = T>,
-{
+impl<T: UnsignedInteger> Iterator for DigitsIterator<T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -91,10 +82,7 @@ where
     // TODO: Provide a better implementation for `nth` and `step_by`.
 }
 
-impl<T> DoubleEndedIterator for DigitsIterator<T>
-where
-    T: Copy + PartialOrd + Mul<Output = T> + Div<Output = T> + Rem<Output = T>,
-{
+impl<T: UnsignedInteger> DoubleEndedIterator for DigitsIterator<T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.len == 0 {
             None
@@ -110,15 +98,9 @@ where
     // TODO: Provide a better implementation for `nth_back`.
 }
 
-impl<T> core::iter::FusedIterator for DigitsIterator<T> where
-    T: Copy + PartialOrd + Mul<Output = T> + Div<Output = T> + Rem<Output = T>
-{
-}
+impl<T: UnsignedInteger> core::iter::FusedIterator for DigitsIterator<T> {}
 
-impl<T> ExactSizeIterator for DigitsIterator<T>
-where
-    T: Copy + PartialOrd + Mul<Output = T> + Div<Output = T> + Rem<Output = T>,
-{
+impl<T: UnsignedInteger> ExactSizeIterator for DigitsIterator<T> {
     fn len(&self) -> usize {
         self.len
     }
@@ -176,16 +158,5 @@ mod tests {
         assert_eq!(digits.next_back(), Some(3));
         assert_eq!(digits.next(), Some(2));
         assert_eq!(digits.next_back(), None);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_signed_integers() {
-        let mut digits = DigitsIterator::new(-123_i32, 10_i32).unwrap();
-
-        assert_eq!(digits.next(), Some(1));
-        assert_eq!(digits.next(), Some(2));
-        assert_eq!(digits.next(), Some(3));
-        assert_eq!(digits.next(), None);
     }
 }
