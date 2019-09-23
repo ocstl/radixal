@@ -1,6 +1,6 @@
 use crate::traits::UnsignedInteger;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum RadixError {
     Radix0,
     Radix1,
@@ -20,7 +20,7 @@ pub enum RadixError {
 /// assert_eq!(digits.next(), Some(3));
 /// assert_eq!(digits.next(), None);
 /// ```
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DigitsIterator<T: UnsignedInteger> {
     current: T,
     radix: T,
@@ -33,6 +33,12 @@ impl<T: UnsignedInteger> DigitsIterator<T> {
     ///
     /// Returns an `Err(RadixError)` if the radix is `0` is `1` (not yet implemented).
     pub fn new(number: T, radix: T) -> Result<DigitsIterator<T>, RadixError> {
+        if radix == T::ZERO {
+            return Err(RadixError::Radix0);
+        } else if radix == T::ONE {
+            return Err(RadixError::Radix1);
+        }
+
         let mut len = 1;
         let mut splitter = T::ONE;
         let mut n = number;
@@ -158,5 +164,17 @@ mod tests {
         assert_eq!(digits.next_back(), Some(3));
         assert_eq!(digits.next(), Some(2));
         assert_eq!(digits.next_back(), None);
+    }
+
+    #[test]
+    fn test_radix_0() {
+        let digits = DigitsIterator::new(123_u32, 0);
+        assert_eq!(digits, Err(RadixError::Radix0));
+    }
+
+    #[test]
+    fn test_radix_1() {
+        let digits = DigitsIterator::new(123_u32, 1);
+        assert_eq!(digits, Err(RadixError::Radix1));
     }
 }
