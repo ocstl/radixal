@@ -26,10 +26,31 @@ use digits::{DigitsIterator, RadixError};
 /// assert_eq!(digits.next(), None);
 /// ```
 pub trait AsDigits: traits::UnsignedInteger {
+    /// Creates a `DigitsIterator` from `self` with a given `radix`.
+    ///
+    /// Returns `Err(RadixError)` if the radix is 0 or 1.
     fn into_digits(self, radix: Self) -> Result<DigitsIterator<Self>, RadixError>;
 
-    fn to_digits(&self, radix: Self) -> Result<DigitsIterator<Self>, RadixError> {
-        self.into_digits(radix)
+    /// Counts the number of digits for a given `radix`.
+    ///
+    /// Returns `Err(RadixError)` if the radix is 0 or 1.
+    fn nbr_digits(self, radix: Self) -> Result<usize, RadixError> {
+        self.into_digits(radix).map(DigitsIterator::count)
+    }
+
+    /// Checks if it is a palindrome for a given `radix`.
+    ///
+    /// Returns `Err(RadixError)` if the radix is 0 or 1.
+    fn is_palindrome(self, radix: Self) -> Result<bool, RadixError> {
+        let mut it = self.into_digits(radix)?;
+
+        while it.len() > 1 {
+            if it.next() != it.next_back() {
+                return Ok(false);
+            }
+        }
+
+        Ok(true)
     }
 }
 
@@ -104,12 +125,18 @@ mod tests {
     }
 
     #[test]
-    fn test_to_digits() {
-        let mut digits = 123_u32.to_digits(10).unwrap();
+    fn test_nbr_digits() {
+        let n = 54321_u32;
+        assert_eq!(n.nbr_digits(10), Ok(5));
+    }
 
-        assert_eq!(digits.next(), Some(1));
-        assert_eq!(digits.next(), Some(2));
-        assert_eq!(digits.next(), Some(3));
-        assert_eq!(digits.next(), None);
+    #[test]
+    fn test_is_palindrome() {
+        let n = 543_212_345_u32;
+        assert!(n.is_palindrome(10).unwrap());
+        let n = 54321_u32;
+        assert!(!n.is_palindrome(10).unwrap());
+        let n = 211_u32;
+        assert!(!(n.is_palindrome(10).unwrap()));
     }
 }
