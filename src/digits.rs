@@ -106,11 +106,7 @@ impl<T: UnsignedInteger> DoubleEndedIterator for DigitsIterator<T> {
 
 impl<T: UnsignedInteger> core::iter::FusedIterator for DigitsIterator<T> {}
 
-impl<T: UnsignedInteger> ExactSizeIterator for DigitsIterator<T> {
-    fn len(&self) -> usize {
-        self.len
-    }
-}
+impl<T: UnsignedInteger> ExactSizeIterator for DigitsIterator<T> {}
 
 #[cfg(test)]
 mod tests {
