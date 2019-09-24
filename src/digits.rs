@@ -173,4 +173,11 @@ mod tests {
         let digits = DigitsIterator::new(123_u32, 1);
         assert_eq!(digits, Err(RadixError::Radix1));
     }
+
+    #[test]
+    fn test_len_does_not_consume_iterator() {
+        let digits = DigitsIterator::new(123_u32, 10).unwrap();
+        assert_eq!(digits.len(), 3);
+        assert_eq!(digits.len(), 3);
+    }
 }
