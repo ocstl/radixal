@@ -12,3 +12,6 @@ license = "MIT"
 repository = "https://github.com/ocstl/radixal"
 readme = "README.md"
 maintenance = { status = "actively-developer" }
+
+[dependencies]
+num-traits = "0.2.8"

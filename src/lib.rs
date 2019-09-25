@@ -4,16 +4,11 @@
 #![no_std]
 
 pub mod digits;
-pub mod traits;
 
 use digits::{DigitsIterator, RadixError};
+use num_traits::Unsigned;
 
 /// An extension trait on unsigned integer types (`u8`, `u16`, `u32`, `u64`, `u128` and `usize`).
-///
-/// The [`into_digits`](#into_digits) method creates an `Iterator<Item = T>` over the digits of the
-/// number, in big endian order, i.e. from most significant to least significant. Since
-/// [`DigitsIterator`](digits/struct.DigitsIterator.html) implements `DoubleEndedIterator`, this
-/// order is easily reversed.
 ///
 /// ```
 /// use radixal::AsDigits;
@@ -25,15 +20,24 @@ use digits::{DigitsIterator, RadixError};
 /// assert_eq!(digits.next(), Some(3));
 /// assert_eq!(digits.next(), None);
 /// ```
-pub trait AsDigits: traits::UnsignedInteger {
+pub trait AsDigits: Copy + PartialOrd + Unsigned {
     /// Creates a `DigitsIterator` from `self` with a given `radix`.
     ///
     /// Returns `Err(RadixError)` if the radix is 0 or 1.
-    fn into_digits(self, radix: Self) -> Result<DigitsIterator<Self>, RadixError>;
+    fn into_digits(self, radix: Self) -> Result<DigitsIterator<Self>, RadixError> {
+        DigitsIterator::new(self, radix)
+    }
 
     /// Counts the number of digits for a given `radix`.
     ///
     /// Returns `Err(RadixError)` if the radix is 0 or 1.
+    ///
+    /// ```
+    /// use radixal::AsDigits;
+    ///
+    /// let number = 123_u32;
+    /// assert_eq!(number.nbr_digits(10).unwrap(), 3);
+    /// ```
     fn nbr_digits(self, radix: Self) -> Result<usize, RadixError> {
         self.into_digits(radix).map(DigitsIterator::count)
     }
@@ -41,6 +45,14 @@ pub trait AsDigits: traits::UnsignedInteger {
     /// Checks if it is a palindrome for a given `radix`.
     ///
     /// Returns `Err(RadixError)` if the radix is 0 or 1.
+    ///
+    /// ```
+    /// use radixal::AsDigits;
+    ///
+    /// let number = 123_u32;
+    /// assert!(!number.is_palindrome(10).unwrap());
+    /// let number = 121_u32;
+    /// assert!(number.is_palindrome(10).unwrap());
     fn is_palindrome(self, radix: Self) -> Result<bool, RadixError> {
         let mut it = self.into_digits(radix)?;
 
@@ -55,21 +67,14 @@ pub trait AsDigits: traits::UnsignedInteger {
 }
 
 macro_rules! impl_digits {
-    ($t:ty) => {
-        impl AsDigits for $t {
-            fn into_digits(self, radix: Self) -> Result<DigitsIterator<Self>, RadixError> {
-                DigitsIterator::new(self, radix)
-            }
-        }
-    };
-
-    ($t:ty, $($ts:ty),+) => {
-        impl_digits! { $t }
-        impl_digits! { $($ts),+ }
+    ( $($t:ty)* ) => {
+        $(
+            impl AsDigits for $t {}
+        )*
     };
 }
 
-impl_digits!(u8, u16, u32, u64, u128, usize);
+impl_digits!(u8 u16 u32 u64 u128 usize);
 
 #[cfg(test)]
 mod tests {

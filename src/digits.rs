@@ -1,4 +1,4 @@
-use crate::traits::UnsignedInteger;
+use num_traits::Unsigned;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum RadixError {
@@ -21,26 +21,26 @@ pub enum RadixError {
 /// assert_eq!(digits.next(), None);
 /// ```
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct DigitsIterator<T: UnsignedInteger> {
+pub struct DigitsIterator<T: Copy + PartialOrd + Unsigned> {
     current: T,
     radix: T,
     splitter: T,
     len: usize,
 }
 
-impl<T: UnsignedInteger> DigitsIterator<T> {
+impl<T: Copy + PartialOrd + Unsigned> DigitsIterator<T> {
     /// Create a new `DigitsIterator` for `number` using `radix`.
     ///
     /// Returns an `Err(RadixError)` if the radix is `0` is `1`.
     pub fn new(number: T, radix: T) -> Result<DigitsIterator<T>, RadixError> {
-        if radix == T::ZERO {
+        if radix == T::zero() {
             return Err(RadixError::Radix0);
-        } else if radix == T::ONE {
+        } else if radix == T::one() {
             return Err(RadixError::Radix1);
         }
 
         let mut len = 1;
-        let mut splitter = T::ONE;
+        let mut splitter = T::one();
         let mut n = number;
 
         while n >= radix {
@@ -58,7 +58,7 @@ impl<T: UnsignedInteger> DigitsIterator<T> {
     }
 }
 
-impl<T: UnsignedInteger> Iterator for DigitsIterator<T> {
+impl<T: Copy + PartialOrd + Unsigned> Iterator for DigitsIterator<T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -88,7 +88,7 @@ impl<T: UnsignedInteger> Iterator for DigitsIterator<T> {
     // TODO: Provide a better implementation for `nth` and `step_by`.
 }
 
-impl<T: UnsignedInteger> DoubleEndedIterator for DigitsIterator<T> {
+impl<T: Copy + PartialOrd + Unsigned> DoubleEndedIterator for DigitsIterator<T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.len == 0 {
             None
@@ -104,9 +104,9 @@ impl<T: UnsignedInteger> DoubleEndedIterator for DigitsIterator<T> {
     // TODO: Provide a better implementation for `nth_back`.
 }
 
-impl<T: UnsignedInteger> core::iter::FusedIterator for DigitsIterator<T> {}
+impl<T: Copy + PartialOrd + Unsigned> core::iter::FusedIterator for DigitsIterator<T> {}
 
-impl<T: UnsignedInteger> ExactSizeIterator for DigitsIterator<T> {}
+impl<T: Copy + PartialOrd + Unsigned> ExactSizeIterator for DigitsIterator<T> {}
 
 #[cfg(test)]
 mod tests {
