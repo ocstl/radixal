@@ -56,6 +56,20 @@ impl<T: Copy + PartialOrd + Unsigned> DigitsIterator<T> {
             len,
         })
     }
+
+    /// Converts the DigitsIterator into a number.
+    pub fn into_number(self) -> T {
+        let radix = self.radix;
+        self.fold(T::zero(), |acc, digit| acc * radix + digit)
+    }
+
+    /// Converts the DigitsIterator into a number with the digits reversed.
+    ///
+    /// Returns `None` if an overflow occurred.
+    pub fn into_reversed_number(self) -> T {
+        let radix = self.radix;
+        self.rfold(T::zero(), |acc, digit| acc * radix + digit)
+    }
 }
 
 impl<T: Copy + PartialOrd + Unsigned> Iterator for DigitsIterator<T> {

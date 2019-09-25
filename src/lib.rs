@@ -64,6 +64,23 @@ pub trait AsDigits: Copy + PartialOrd + Unsigned {
 
         Ok(true)
     }
+
+    /// Reverses the digits, returning a new number with the digits reversed.
+    ///
+    /// Returns `Err(RadixError)` if the radix is 0 or 1.
+    ///
+    /// ```
+    /// use radixal::AsDigits;
+    ///
+    /// let number = 123_u32;
+    /// let reversed = number.reverse_digits(10).unwrap();
+    /// assert_eq!(reversed, 321);
+    /// ```
+    fn reverse_digits(self, radix: Self) -> Result<Self, RadixError> {
+        Ok(self
+            .into_digits(radix)?
+            .into_reversed_number())
+    }
 }
 
 macro_rules! impl_digits {
@@ -143,5 +160,13 @@ mod tests {
         assert!(!n.is_palindrome(10).unwrap());
         let n = 211_u32;
         assert!(!(n.is_palindrome(10).unwrap()));
+    }
+
+    #[test]
+    fn test_reverse() {
+        let n = 123_u32;
+        assert_eq!(n.reverse_digits(10).unwrap(), 321_u32);
+        let n = 255_u8;
+        assert_eq!(n.reverse_digits(10).unwrap(), 40_u8);
     }
 }
