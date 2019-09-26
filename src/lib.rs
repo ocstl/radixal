@@ -6,7 +6,7 @@
 pub mod digits;
 
 use digits::{DigitsIterator, RadixError};
-use num_traits::Unsigned;
+use num_traits::{CheckedAdd, CheckedMul, Unsigned};
 
 /// An extension trait on unsigned integer types (`u8`, `u16`, `u32`, `u64`, `u128` and `usize`).
 ///
@@ -20,7 +20,7 @@ use num_traits::Unsigned;
 /// assert_eq!(digits.next(), Some(3));
 /// assert_eq!(digits.next(), None);
 /// ```
-pub trait AsDigits: Copy + PartialOrd + Unsigned {
+pub trait AsDigits: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned {
     /// Creates a `DigitsIterator` from `self` with a given `radix`.
     ///
     /// Returns `Err(RadixError)` if the radix is 0 or 1.
@@ -68,18 +68,18 @@ pub trait AsDigits: Copy + PartialOrd + Unsigned {
     /// Reverses the digits, returning a new number with the digits reversed.
     ///
     /// Returns `Err(RadixError)` if the radix is 0 or 1.
+    /// Returns `Ok(None)` on overflow.
     ///
     /// ```
     /// use radixal::AsDigits;
     ///
     /// let number = 123_u32;
     /// let reversed = number.reverse_digits(10).unwrap();
-    /// assert_eq!(reversed, 321);
+    /// assert_eq!(reversed, Some(321));
     /// ```
-    fn reverse_digits(self, radix: Self) -> Result<Self, RadixError> {
-        Ok(self
-            .into_digits(radix)?
-            .into_reversed_number())
+    fn reverse_digits(self, radix: Self) -> Result<Option<Self>, RadixError> {
+        self.into_digits(radix)
+            .map(DigitsIterator::into_reversed_number)
     }
 }
 
@@ -165,8 +165,8 @@ mod tests {
     #[test]
     fn test_reverse() {
         let n = 123_u32;
-        assert_eq!(n.reverse_digits(10).unwrap(), 321_u32);
+        assert_eq!(n.reverse_digits(10).unwrap(), Some(321_u32));
         let n = 255_u8;
-        assert_eq!(n.reverse_digits(10).unwrap(), 40_u8);
+        assert_eq!(n.reverse_digits(10).unwrap(), None);
     }
 }

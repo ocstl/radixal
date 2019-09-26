@@ -1,4 +1,4 @@
-use num_traits::Unsigned;
+use num_traits::{CheckedAdd, CheckedMul, Unsigned};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum RadixError {
@@ -21,14 +21,14 @@ pub enum RadixError {
 /// assert_eq!(digits.next(), None);
 /// ```
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct DigitsIterator<T: Copy + PartialOrd + Unsigned> {
+pub struct DigitsIterator<T: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned> {
     current: T,
     radix: T,
     splitter: T,
     len: usize,
 }
 
-impl<T: Copy + PartialOrd + Unsigned> DigitsIterator<T> {
+impl<T: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned> DigitsIterator<T> {
     /// Create a new `DigitsIterator` for `number` using `radix`.
     ///
     /// Returns an `Err(RadixError)` if the radix is `0` is `1`.
@@ -66,13 +66,15 @@ impl<T: Copy + PartialOrd + Unsigned> DigitsIterator<T> {
     /// Converts the DigitsIterator into a number with the digits reversed.
     ///
     /// Returns `None` if an overflow occurred.
-    pub fn into_reversed_number(self) -> T {
+    pub fn into_reversed_number(self) -> Option<T> {
         let radix = self.radix;
-        self.rfold(T::zero(), |acc, digit| acc * radix + digit)
+        self.rfold(Some(T::zero()), |acc, digit| {
+            acc.and_then(|s| s.checked_mul(&radix).and_then(|s| s.checked_add(&digit)))
+        })
     }
 }
 
-impl<T: Copy + PartialOrd + Unsigned> Iterator for DigitsIterator<T> {
+impl<T: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned> Iterator for DigitsIterator<T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -102,7 +104,9 @@ impl<T: Copy + PartialOrd + Unsigned> Iterator for DigitsIterator<T> {
     // TODO: Provide a better implementation for `nth` and `step_by`.
 }
 
-impl<T: Copy + PartialOrd + Unsigned> DoubleEndedIterator for DigitsIterator<T> {
+impl<T: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned> DoubleEndedIterator
+    for DigitsIterator<T>
+{
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.len == 0 {
             None
@@ -118,9 +122,15 @@ impl<T: Copy + PartialOrd + Unsigned> DoubleEndedIterator for DigitsIterator<T> 
     // TODO: Provide a better implementation for `nth_back`.
 }
 
-impl<T: Copy + PartialOrd + Unsigned> core::iter::FusedIterator for DigitsIterator<T> {}
+impl<T: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned> core::iter::FusedIterator
+    for DigitsIterator<T>
+{
+}
 
-impl<T: Copy + PartialOrd + Unsigned> ExactSizeIterator for DigitsIterator<T> {}
+impl<T: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned> ExactSizeIterator
+    for DigitsIterator<T>
+{
+}
 
 #[cfg(test)]
 mod tests {
