@@ -1,17 +1,19 @@
-//! Radixal provides the [`AsDigits`](trait.AsDigits.html) trait to simplify treating unsigned
+//! Radixal provides the [`IntoDigits`](trait.IntoDigits.html) trait to simplify treating unsigned
 //! integer types as a sequence of digits under a specified radix.
 
 #![no_std]
 
-pub mod digits;
+use core::num::Wrapping;
+use digits_iterator::{DigitsIterator, RadixError};
+use num_traits::{Unsigned, WrappingAdd, WrappingMul};
 
-use digits::{DigitsIterator, RadixError};
-use num_traits::{CheckedAdd, CheckedMul, Unsigned};
+pub mod digits_iterator;
 
-/// An extension trait on unsigned integer types (`u8`, `u16`, `u32`, `u64`, `u128` and `usize`).
+/// An extension trait on unsigned integer types (`u8`, `u16`, `u32`, `u64`, `u128` and `usize`)
+/// and the corresponding `Wrapping` type.
 ///
 /// ```
-/// use radixal::AsDigits;
+/// use radixal::IntoDigits;
 ///
 /// let mut digits = 123_u32.into_digits(10).expect("Bad radix.");
 ///
@@ -20,7 +22,7 @@ use num_traits::{CheckedAdd, CheckedMul, Unsigned};
 /// assert_eq!(digits.next(), Some(3));
 /// assert_eq!(digits.next(), None);
 /// ```
-pub trait AsDigits: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned {
+pub trait IntoDigits: Copy + PartialOrd + WrappingAdd + WrappingMul + Unsigned {
     /// Creates a `DigitsIterator` from `self` with a given `radix`.
     ///
     /// Returns `Err(RadixError)` if the radix is 0 or 1.
@@ -33,7 +35,7 @@ pub trait AsDigits: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned {
     /// Returns `Err(RadixError)` if the radix is 0 or 1.
     ///
     /// ```
-    /// use radixal::AsDigits;
+    /// use radixal::IntoDigits;
     ///
     /// let number = 123_u32;
     /// assert_eq!(number.nbr_digits(10).unwrap(), 3);
@@ -47,37 +49,36 @@ pub trait AsDigits: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned {
     /// Returns `Err(RadixError)` if the radix is 0 or 1.
     ///
     /// ```
-    /// use radixal::AsDigits;
+    /// use radixal::IntoDigits;
     ///
     /// let number = 123_u32;
     /// assert!(!number.is_palindrome(10).unwrap());
     /// let number = 121_u32;
     /// assert!(number.is_palindrome(10).unwrap());
+    /// ```
     fn is_palindrome(self, radix: Self) -> Result<bool, RadixError> {
-        let mut it = self.into_digits(radix)?;
-
-        while it.len() > 1 {
-            if it.next() != it.next_back() {
-                return Ok(false);
-            }
-        }
-
-        Ok(true)
+        self.into_digits(radix).map(DigitsIterator::is_palindrome)
     }
 
-    /// Reverses the digits, returning a new number with the digits reversed.
+    /// Reverses the digits, returning a new number with the digits reversed, using wrapping
+    /// semantics if necessary.
     ///
     /// Returns `Err(RadixError)` if the radix is 0 or 1.
-    /// Returns `Ok(None)` on overflow.
     ///
     /// ```
-    /// use radixal::AsDigits;
+    /// use radixal::IntoDigits;
     ///
     /// let number = 123_u32;
     /// let reversed = number.reverse_digits(10).unwrap();
-    /// assert_eq!(reversed, Some(321));
+    /// assert_eq!(reversed, 321);
+    ///
+    /// /// Wrapping on overflow.
+    /// let number = 255_u8;
+    /// let reversed = number.reverse_digits(10).unwrap();
+    /// assert_ne!(reversed, number);
+    /// assert_eq!(reversed, 40);
     /// ```
-    fn reverse_digits(self, radix: Self) -> Result<Option<Self>, RadixError> {
+    fn reverse_digits(self, radix: Self) -> Result<Self, RadixError> {
         self.into_digits(radix)
             .map(DigitsIterator::into_reversed_number)
     }
@@ -86,7 +87,8 @@ pub trait AsDigits: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned {
 macro_rules! impl_digits {
     ( $($t:ty)* ) => {
         $(
-            impl AsDigits for $t {}
+            impl IntoDigits for $t {}
+            impl IntoDigits for Wrapping<$t> {}
         )*
     };
 }
@@ -160,13 +162,5 @@ mod tests {
         assert!(!n.is_palindrome(10).unwrap());
         let n = 211_u32;
         assert!(!(n.is_palindrome(10).unwrap()));
-    }
-
-    #[test]
-    fn test_reverse() {
-        let n = 123_u32;
-        assert_eq!(n.reverse_digits(10).unwrap(), Some(321_u32));
-        let n = 255_u8;
-        assert_eq!(n.reverse_digits(10).unwrap(), None);
     }
 }

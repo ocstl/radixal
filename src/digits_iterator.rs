@@ -1,4 +1,4 @@
-use num_traits::{CheckedAdd, CheckedMul, Unsigned};
+use crate::IntoDigits;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum RadixError {
@@ -11,7 +11,7 @@ pub enum RadixError {
 /// For a given radix, iterates over the digits in big endian order, i.e. from most significant
 /// to least significant.
 /// ```
-/// use radixal::digits::DigitsIterator;
+/// use radixal::digits_iterator::DigitsIterator;
 ///
 /// let mut digits = DigitsIterator::new(123_u32, 10).expect("Bad radix.");
 ///
@@ -21,14 +21,14 @@ pub enum RadixError {
 /// assert_eq!(digits.next(), None);
 /// ```
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct DigitsIterator<T: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned> {
+pub struct DigitsIterator<T: IntoDigits> {
     current: T,
     radix: T,
     splitter: T,
     len: usize,
 }
 
-impl<T: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned> DigitsIterator<T> {
+impl<T: IntoDigits> DigitsIterator<T> {
     /// Create a new `DigitsIterator` for `number` using `radix`.
     ///
     /// Returns an `Err(RadixError)` if the radix is `0` is `1`.
@@ -57,24 +57,35 @@ impl<T: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned> DigitsIterator<T
         })
     }
 
+    /// Checks whether the number is a palindrome.
+    #[allow(clippy::wrong_self_convention)]
+    pub fn is_palindrome(mut self) -> bool {
+        while self.len > 1 {
+            if self.next() != self.next_back() {
+                return false;
+            }
+        }
+
+        true
+    }
+
     /// Converts the DigitsIterator into a number.
     pub fn into_number(self) -> T {
         let radix = self.radix;
         self.fold(T::zero(), |acc, digit| acc * radix + digit)
     }
 
-    /// Converts the DigitsIterator into a number with the digits reversed.
-    ///
-    /// Returns `None` if an overflow occurred.
-    pub fn into_reversed_number(self) -> Option<T> {
+    /// Converts the DigitsIterator into a number with the digits reversed, using wrapping
+    /// semantics if necessary.
+    pub fn into_reversed_number(self) -> T {
         let radix = self.radix;
-        self.rfold(Some(T::zero()), |acc, digit| {
-            acc.and_then(|s| s.checked_mul(&radix).and_then(|s| s.checked_add(&digit)))
+        self.rfold(T::zero(), |acc, digit| {
+            acc.wrapping_mul(&radix).wrapping_add(&digit)
         })
     }
 }
 
-impl<T: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned> Iterator for DigitsIterator<T> {
+impl<T: IntoDigits> Iterator for DigitsIterator<T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -104,9 +115,7 @@ impl<T: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned> Iterator for Dig
     // TODO: Provide a better implementation for `nth` and `step_by`.
 }
 
-impl<T: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned> DoubleEndedIterator
-    for DigitsIterator<T>
-{
+impl<T: IntoDigits> DoubleEndedIterator for DigitsIterator<T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.len == 0 {
             None
@@ -122,19 +131,30 @@ impl<T: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned> DoubleEndedItera
     // TODO: Provide a better implementation for `nth_back`.
 }
 
-impl<T: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned> core::iter::FusedIterator
-    for DigitsIterator<T>
-{
-}
+impl<T: IntoDigits> core::iter::FusedIterator for DigitsIterator<T> {}
 
-impl<T: Copy + PartialOrd + CheckedAdd + CheckedMul + Unsigned> ExactSizeIterator
-    for DigitsIterator<T>
-{
-}
+impl<T: IntoDigits> ExactSizeIterator for DigitsIterator<T> {}
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_types() {
+        use core::num::Wrapping;
+        assert!(DigitsIterator::new(1_u8, 10).is_ok());
+        assert!(DigitsIterator::new(1_u16, 10).is_ok());
+        assert!(DigitsIterator::new(1_u32, 10).is_ok());
+        assert!(DigitsIterator::new(1_u64, 10).is_ok());
+        assert!(DigitsIterator::new(1_u128, 10).is_ok());
+        assert!(DigitsIterator::new(1_usize, 10).is_ok());
+        assert!(DigitsIterator::new(Wrapping(1_u8), Wrapping(10)).is_ok());
+        assert!(DigitsIterator::new(Wrapping(1_u16), Wrapping(10)).is_ok());
+        assert!(DigitsIterator::new(Wrapping(1_u32), Wrapping(10)).is_ok());
+        assert!(DigitsIterator::new(Wrapping(1_u64), Wrapping(10)).is_ok());
+        assert!(DigitsIterator::new(Wrapping(1_u128), Wrapping(10)).is_ok());
+        assert!(DigitsIterator::new(Wrapping(1_usize), Wrapping(10)).is_ok());
+    }
 
     #[test]
     fn very_small() {
@@ -203,5 +223,22 @@ mod tests {
         let digits = DigitsIterator::new(123_u32, 10).unwrap();
         assert_eq!(digits.len(), 3);
         assert_eq!(digits.len(), 3);
+    }
+
+    #[test]
+    fn test_into_number() {
+        let number = 123_u8;
+        let digits = DigitsIterator::new(number, 10).unwrap();
+        assert_eq!(number, digits.into_number());
+    }
+
+    #[test]
+    fn test_into_reversed_number() {
+        let number = 255_u8;
+        let reversed = DigitsIterator::new(number, 10)
+            .unwrap()
+            .into_reversed_number();
+        assert_ne!(reversed, number);
+        assert_eq!(reversed, 40);
     }
 }
