@@ -1,13 +1,12 @@
 //! Radixal provides the [`IntoDigits`](trait.IntoDigits.html) trait to simplify treating unsigned
 //! integer types as a sequence of digits under a specified radix.
-
 #![no_std]
+
+pub mod digits_iterator;
 
 use core::num::Wrapping;
 use digits_iterator::{DigitsIterator, RadixError};
 use num_traits::{Unsigned, WrappingAdd, WrappingMul};
-
-pub mod digits_iterator;
 
 /// An extension trait on unsigned integer types (`u8`, `u16`, `u32`, `u64`, `u128` and `usize`)
 /// and the corresponding `Wrapping` type.
@@ -38,14 +37,14 @@ pub trait IntoDigits: Copy + PartialOrd + WrappingAdd + WrappingMul + Unsigned {
         DigitsIterator::new(self, radix)
     }
 
-    /// Creates a `DigitsIterator` with a decimal radix.
-    fn into_decimal_digits(self) -> DigitsIterator<Self> {
-        self.into_digits(Self::DECIMAL_RADIX).unwrap()
-    }
-
     /// Creates a `DigitsIterator` with a binary radix.
     fn into_binary_digits(self) -> DigitsIterator<Self> {
         self.into_digits(Self::BINARY_RADIX).unwrap()
+    }
+
+    /// Creates a `DigitsIterator` with a decimal radix.
+    fn into_decimal_digits(self) -> DigitsIterator<Self> {
+        self.into_digits(Self::DECIMAL_RADIX).unwrap()
     }
 
     /// Counts the number of digits for a given `radix`.
@@ -64,14 +63,14 @@ pub trait IntoDigits: Copy + PartialOrd + WrappingAdd + WrappingMul + Unsigned {
         self.into_digits(radix).map(DigitsIterator::count)
     }
 
-    /// Counts the number of decimal digits.
-    fn nbr_decimal_digits(self) -> usize {
-        self.nbr_digits(Self::DECIMAL_RADIX).unwrap()
-    }
-
     /// Counts the number of binary digits.
     fn nbr_binary_digits(self) -> usize {
         self.nbr_digits(Self::BINARY_RADIX).unwrap()
+    }
+
+    /// Counts the number of decimal digits.
+    fn nbr_decimal_digits(self) -> usize {
+        self.nbr_digits(Self::DECIMAL_RADIX).unwrap()
     }
 
     /// Checks if it is a palindrome for a given `radix`.
@@ -100,18 +99,20 @@ pub trait IntoDigits: Copy + PartialOrd + WrappingAdd + WrappingMul + Unsigned {
         Ok(true)
     }
 
-    /// Checks if it is a palindrome under a decimal number system.
-    fn is_decimal_palindrome(self) -> bool {
-        self.is_palindrome(Self::DECIMAL_RADIX).unwrap()
-    }
-
     /// Checks if it is a palindrome under a binary number system.
     fn is_binary_palindrome(self) -> bool {
         self.is_palindrome(Self::BINARY_RADIX).unwrap()
     }
 
+    /// Checks if it is a palindrome under a decimal number system.
+    fn is_decimal_palindrome(self) -> bool {
+        self.is_palindrome(Self::DECIMAL_RADIX).unwrap()
+    }
+
     /// Reverses the digits, returning a new number with the digits reversed, using wrapping
     /// semantics if necessary.
+    ///
+    /// Since trailing zeroes are not conserved, this operation is not reversible.
     ///
     /// Returns `Err(RadixError)` if the radix is 0 or 1.
     ///
@@ -129,20 +130,51 @@ pub trait IntoDigits: Copy + PartialOrd + WrappingAdd + WrappingMul + Unsigned {
     /// let reversed = number.reverse_digits(10).unwrap();
     /// assert_ne!(reversed, number);
     /// assert_eq!(reversed, 40);
+    ///
+    /// /// Trailing zeroes lead to irreversibility.
+    /// let number = 1230_u32;
+    /// let twice_reversed = number.reverse_digits(10).unwrap().reverse_digits(10).unwrap();
+    /// assert_ne!(twice_reversed, number);
+    /// assert_eq!(twice_reversed, 123);
     /// ```
     fn reverse_digits(self, radix: Self) -> Result<Self, RadixError> {
         self.into_digits(radix)
             .map(DigitsIterator::into_reversed_number)
     }
 
-    /// Reverses the digits under a decimal number system, using wrapping semantics if necessary.
-    fn reverse_decimal_digits(self) -> Self {
-        self.reverse_digits(Self::DECIMAL_RADIX).unwrap()
-    }
-
     /// Reverse the digits under a binary number system.
+    ///
+    /// Since trailing zeroes are not conserved, this operation is not reversible.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use radixal::IntoDigits;
+    ///
+    /// let n = 0b1100_u32;
+    /// let m = n.reverse_binary_digits();
+    ///
+    /// assert_eq!(m, 0b11);
+    /// ```
     fn reverse_binary_digits(self) -> Self {
         self.reverse_digits(Self::BINARY_RADIX).unwrap()
+    }
+
+    /// Reverses the digits under a decimal number system, using wrapping semantics if necessary.
+    ///
+    /// Since trailing zeroes are not conserved, this operation is not reversible.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use radixal::IntoDigits;
+    ///
+    /// let number = 123_u32;
+    /// let reversed = number.reverse_decimal_digits();
+    /// assert_eq!(reversed, 321);
+    /// ```
+    fn reverse_decimal_digits(self) -> Self {
+        self.reverse_digits(Self::DECIMAL_RADIX).unwrap()
     }
 }
 
