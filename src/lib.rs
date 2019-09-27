@@ -12,6 +12,8 @@ pub mod digits_iterator;
 /// An extension trait on unsigned integer types (`u8`, `u16`, `u32`, `u64`, `u128` and `usize`)
 /// and the corresponding `Wrapping` type.
 ///
+/// # Example
+///
 /// ```
 /// use radixal::IntoDigits;
 ///
@@ -23,16 +25,34 @@ pub mod digits_iterator;
 /// assert_eq!(digits.next(), None);
 /// ```
 pub trait IntoDigits: Copy + PartialOrd + WrappingAdd + WrappingMul + Unsigned {
-    /// Creates a `DigitsIterator` from `self` with a given `radix`.
+    #[doc(hidden)]
+    const BINARY_RADIX: Self;
+
+    #[doc(hidden)]
+    const DECIMAL_RADIX: Self;
+
+    /// Creates a `DigitsIterator` with a given `radix`.
     ///
     /// Returns `Err(RadixError)` if the radix is 0 or 1.
     fn into_digits(self, radix: Self) -> Result<DigitsIterator<Self>, RadixError> {
         DigitsIterator::new(self, radix)
     }
 
+    /// Creates a `DigitsIterator` with a decimal radix.
+    fn into_decimal_digits(self) -> DigitsIterator<Self> {
+        self.into_digits(Self::DECIMAL_RADIX).unwrap()
+    }
+
+    /// Creates a `DigitsIterator` with a binary radix.
+    fn into_binary_digits(self) -> DigitsIterator<Self> {
+        self.into_digits(Self::BINARY_RADIX).unwrap()
+    }
+
     /// Counts the number of digits for a given `radix`.
     ///
     /// Returns `Err(RadixError)` if the radix is 0 or 1.
+    ///
+    /// # Example
     ///
     /// ```
     /// use radixal::IntoDigits;
@@ -44,9 +64,21 @@ pub trait IntoDigits: Copy + PartialOrd + WrappingAdd + WrappingMul + Unsigned {
         self.into_digits(radix).map(DigitsIterator::count)
     }
 
+    /// Counts the number of decimal digits.
+    fn nbr_decimal_digits(self) -> usize {
+        self.nbr_digits(Self::DECIMAL_RADIX).unwrap()
+    }
+
+    /// Counts the number of binary digits.
+    fn nbr_binary_digits(self) -> usize {
+        self.nbr_digits(Self::BINARY_RADIX).unwrap()
+    }
+
     /// Checks if it is a palindrome for a given `radix`.
     ///
     /// Returns `Err(RadixError)` if the radix is 0 or 1.
+    ///
+    /// # Example
     ///
     /// ```
     /// use radixal::IntoDigits;
@@ -57,13 +89,33 @@ pub trait IntoDigits: Copy + PartialOrd + WrappingAdd + WrappingMul + Unsigned {
     /// assert!(number.is_palindrome(10).unwrap());
     /// ```
     fn is_palindrome(self, radix: Self) -> Result<bool, RadixError> {
-        self.into_digits(radix).map(DigitsIterator::is_palindrome)
+        let mut iter = self.into_digits(radix)?;
+
+        while iter.len() > 1 {
+            if iter.next() != iter.next_back() {
+                return Ok(false);
+            }
+        }
+
+        Ok(true)
+    }
+
+    /// Checks if it is a palindrome under a decimal number system.
+    fn is_decimal_palindrome(self) -> bool {
+        self.is_palindrome(Self::DECIMAL_RADIX).unwrap()
+    }
+
+    /// Checks if it is a palindrome under a binary number system.
+    fn is_binary_palindrome(self) -> bool {
+        self.is_palindrome(Self::BINARY_RADIX).unwrap()
     }
 
     /// Reverses the digits, returning a new number with the digits reversed, using wrapping
     /// semantics if necessary.
     ///
     /// Returns `Err(RadixError)` if the radix is 0 or 1.
+    ///
+    /// # Example
     ///
     /// ```
     /// use radixal::IntoDigits;
@@ -82,13 +134,29 @@ pub trait IntoDigits: Copy + PartialOrd + WrappingAdd + WrappingMul + Unsigned {
         self.into_digits(radix)
             .map(DigitsIterator::into_reversed_number)
     }
+
+    /// Reverses the digits under a decimal number system, using wrapping semantics if necessary.
+    fn reverse_decimal_digits(self) -> Self {
+        self.reverse_digits(Self::DECIMAL_RADIX).unwrap()
+    }
+
+    /// Reverse the digits under a binary number system.
+    fn reverse_binary_digits(self) -> Self {
+        self.reverse_digits(Self::BINARY_RADIX).unwrap()
+    }
 }
 
 macro_rules! impl_digits {
     ( $($t:ty)* ) => {
         $(
-            impl IntoDigits for $t {}
-            impl IntoDigits for Wrapping<$t> {}
+            impl IntoDigits for $t {
+                const BINARY_RADIX: Self = 2;
+                const DECIMAL_RADIX: Self = 10;
+            }
+            impl IntoDigits for Wrapping<$t> {
+                const BINARY_RADIX: Self = Wrapping(2);
+                const DECIMAL_RADIX: Self = Wrapping(10);
+            }
         )*
     };
 }

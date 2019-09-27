@@ -10,6 +10,9 @@ pub enum RadixError {
 ///
 /// For a given radix, iterates over the digits in big endian order, i.e. from most significant
 /// to least significant.
+///
+/// # Example
+///
 /// ```
 /// use radixal::digits_iterator::DigitsIterator;
 ///
@@ -55,18 +58,6 @@ impl<T: IntoDigits> DigitsIterator<T> {
             splitter,
             len,
         })
-    }
-
-    /// Checks whether the number is a palindrome.
-    #[allow(clippy::wrong_self_convention)]
-    pub fn is_palindrome(mut self) -> bool {
-        while self.len > 1 {
-            if self.next() != self.next_back() {
-                return false;
-            }
-        }
-
-        true
     }
 
     /// Converts the DigitsIterator into a number.
