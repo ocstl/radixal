@@ -241,7 +241,7 @@ mod tests {
 
     #[test]
     fn test_last() {
-        let number = 123456_u32;
+        let number = 123_456_u32;
         let mut digits = DigitsIterator::new(number, 10).unwrap();
 
         assert_eq!(digits.next(), Some(1));
