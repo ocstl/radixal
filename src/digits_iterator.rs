@@ -10,19 +10,6 @@ pub enum RadixError {
 ///
 /// For a given radix, iterates over the digits in big endian order, i.e. from most significant
 /// to least significant.
-///
-/// # Example
-///
-/// ```
-/// use radixal::digits_iterator::DigitsIterator;
-///
-/// let mut digits = DigitsIterator::new(123_u32, 10).expect("Bad radix.");
-///
-/// assert_eq!(digits.next(), Some(1));
-/// assert_eq!(digits.next(), Some(2));
-/// assert_eq!(digits.next(), Some(3));
-/// assert_eq!(digits.next(), None);
-/// ```
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DigitsIterator<T: IntoDigits> {
     current: T,
@@ -35,6 +22,25 @@ impl<T: IntoDigits> DigitsIterator<T> {
     /// Create a new `DigitsIterator` for `number` using `radix`.
     ///
     /// Returns an `Err(RadixError)` if the radix is `0` is `1`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use radixal::digits_iterator::{DigitsIterator, RadixError};
+    ///
+    /// let mut digits = DigitsIterator::new(123_u32, 10).unwrap();
+    ///
+    /// assert_eq!(digits.next(), Some(1));
+    /// assert_eq!(digits.next(), Some(2));
+    /// assert_eq!(digits.next(), Some(3));
+    /// assert_eq!(digits.next(), None);
+    ///
+    /// let mut digits = DigitsIterator::new(123_u32, 0);
+    /// assert_eq!(digits.unwrap_err(), RadixError::Radix0);
+    ///
+    /// let mut digits = DigitsIterator::new(123_u32, 1);
+    /// assert_eq!(digits.unwrap_err(), RadixError::Radix1);
+    /// ```
     pub fn new(number: T, radix: T) -> Result<DigitsIterator<T>, RadixError> {
         if radix == T::zero() {
             return Err(RadixError::Radix0);
@@ -60,13 +66,13 @@ impl<T: IntoDigits> DigitsIterator<T> {
         })
     }
 
-    /// Converts the DigitsIterator into a number.
+    /// Converts the `DigitsIterator` into a number.
     pub fn into_number(self) -> T {
         let radix = self.radix;
         self.fold(T::zero(), |acc, digit| acc * radix + digit)
     }
 
-    /// Converts the DigitsIterator into a number with the digits reversed, using wrapping
+    /// Converts the `DigitsIterator` into a number with the digits reversed, using wrapping
     /// semantics if necessary.
     pub fn into_reversed_number(self) -> T {
         let radix = self.radix;
@@ -99,8 +105,12 @@ impl<T: IntoDigits> Iterator for DigitsIterator<T> {
         self.len
     }
 
-    fn last(mut self) -> Option<Self::Item> {
-        self.next_back()
+    fn last(self) -> Option<Self::Item> {
+        if self.len > 0 {
+            Some(self.current % self.radix)
+        } else {
+            None
+        }
     }
 
     // TODO: Provide a better implementation for `nth` and `step_by`.
@@ -231,5 +241,15 @@ mod tests {
             .into_reversed_number();
         assert_ne!(reversed, number);
         assert_eq!(reversed, 40);
+    }
+
+    #[test]
+    fn test_last() {
+        let number = 123456_u32;
+        let mut digits = DigitsIterator::new(number, 10).unwrap();
+
+        assert_eq!(digits.next(), Some(1));
+        assert_eq!(digits.next_back(), Some(6));
+        assert_eq!(digits.last(), Some(5));
     }
 }
