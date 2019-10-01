@@ -112,8 +112,6 @@ impl<T: IntoDigits> Iterator for DigitsIterator<T> {
             None
         }
     }
-
-    // TODO: Provide a better implementation for `nth` and `step_by`.
 }
 
 impl<T: IntoDigits> DoubleEndedIterator for DigitsIterator<T> {
@@ -128,8 +126,6 @@ impl<T: IntoDigits> DoubleEndedIterator for DigitsIterator<T> {
             Some(digit)
         }
     }
-
-    // TODO: Provide a better implementation for `nth_back`.
 }
 
 impl<T: IntoDigits> core::iter::FusedIterator for DigitsIterator<T> {}
