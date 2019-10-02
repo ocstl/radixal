@@ -68,8 +68,7 @@ impl<T: IntoDigits> DigitsIterator<T> {
 
     /// Converts the `DigitsIterator` into a number.
     pub fn into_number(self) -> T {
-        let radix = self.radix;
-        self.fold(T::zero(), |acc, digit| acc * radix + digit)
+        self.current
     }
 
     /// Converts the `DigitsIterator` into a number with the digits reversed, using wrapping
@@ -225,8 +224,11 @@ mod tests {
     #[test]
     fn test_into_number() {
         let number = 123_u8;
-        let digits = DigitsIterator::new(number, 10).unwrap();
-        assert_eq!(number, digits.into_number());
+        let mut digits = DigitsIterator::new(number, 10).unwrap();
+        assert_eq!(number, digits.clone().into_number());
+        let _ = digits.next();
+        let _ = digits.next_back();
+        assert_eq!(2, digits.into_number());
     }
 
     #[test]
