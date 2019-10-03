@@ -79,6 +79,76 @@ impl<T: IntoDigits> DigitsIterator<T> {
             acc.wrapping_mul(&radix).wrapping_add(&digit)
         })
     }
+
+    /// Returns the current number being iterated over, leaving the iterator unchanged.
+    pub fn to_number(&self) -> T {
+        self.current
+    }
+
+    /// Returns the current number being iterated over with the digits reversed, leaving the
+    /// iterator unchanged.
+    pub fn to_reversed_number(&self) -> T {
+        self.clone().rfold(T::zero(), |acc, digit| {
+            acc.wrapping_mul(&self.radix).wrapping_add(&digit)
+        })
+    }
+
+    /// Rotate the digits such that the first digit (most significant) becomes the last digit
+    /// (least significant). This operation preserves the number of digits; in other words, the
+    /// first digit may now be `0`.
+    ///
+    /// Since the new number may overflow, wrapping semantics are used.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use radixal::digits_iterator::DigitsIterator;
+    ///
+    /// let number = 1234_u32;
+    /// let mut digits = DigitsIterator::new(number, 10).unwrap();
+    ///
+    /// assert_eq!(digits.rotate_left(1).to_number(), 2341);
+    /// assert_eq!(digits.rotate_left(2).to_number(), 4123);
+    /// ```
+    pub fn rotate_left(&mut self, mut n: usize) -> &Self {
+        while n > 0 {
+            let first_digit = self.current / self.splitter;
+            self.current = (self.current % self.splitter)
+                .wrapping_mul(&self.radix)
+                .wrapping_add(&first_digit);
+            n -= 1;
+        }
+
+        self
+    }
+
+    /// Rotate the digits such that the last digit (least significant) becomes the first digit
+    /// (most significant). This operation preserves the number of digits; in other words, the
+    /// first digit may now be `0`.
+    ///
+    /// Since the new number may overflow, wrapping sematics are used.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use radixal::digits_iterator::DigitsIterator;
+    ///
+    /// let number = 1234_u32;
+    /// let mut digits = DigitsIterator::new(number, 10).unwrap();
+    ///
+    /// assert_eq!(digits.rotate_right(1).to_number(), 4123);
+    /// assert_eq!(digits.rotate_right(2).to_number(), 2341);
+    /// ```
+    pub fn rotate_right(&mut self, mut n: usize) -> &Self {
+        while n > 0 {
+            let last_digit = self.current % self.radix;
+            self.current =
+                (self.current / self.radix).wrapping_add(&last_digit.wrapping_mul(&self.splitter));
+            n -= 1;
+        }
+
+        self
+    }
 }
 
 impl<T: IntoDigits> Iterator for DigitsIterator<T> {
@@ -249,5 +319,25 @@ mod tests {
         assert_eq!(digits.next(), Some(1));
         assert_eq!(digits.next_back(), Some(6));
         assert_eq!(digits.last(), Some(5));
+    }
+
+    #[test]
+    fn test_rotate_left_retains_zeroes() {
+        let number = 1023_u32;
+        let mut digits = DigitsIterator::new(number, 10).unwrap();
+        digits.rotate_left(1);
+
+        assert_eq!(digits.to_number(), 231);
+        assert_eq!(digits.next(), Some(0));
+    }
+
+    #[test]
+    fn test_rotate_right_retains_zeroes() {
+        let number = 1230_u32;
+        let mut digits = DigitsIterator::new(number, 10).unwrap();
+        digits.rotate_right(1);
+
+        assert_eq!(digits.to_number(), 123);
+        assert_eq!(digits.next(), Some(0));
     }
 }
