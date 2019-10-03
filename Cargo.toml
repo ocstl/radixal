@@ -1,12 +1,12 @@
 [package]
 name = "radixal"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2018"
 authors = ["Olivier Chassé St-Laurent <oliviercsl@gmail.com>"]
 description = "Digits iteration for unsigned integer types."
 documentation = "https://docs.rs/radixal"
 homepage = "https://github.com/ocstl/radixal"
-keywords = ["base", "digits", "radix"]
+keywords = ["base", "digits", "radix", "palindrome"]
 categories = ["no-std"]
 license = "MIT"
 repository = "https://github.com/ocstl/radixal"
