@@ -21,3 +21,6 @@ default = ["std"]
 # Allows to add some provided methods relying on collections from the
 # standard library.
 std = []
+
+[[bench]]
+name = "into_digits"
