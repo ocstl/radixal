@@ -4,9 +4,15 @@ extern crate test;
 macro_rules! create_radix2_bench {
     ( $t:ident ) => {
         #[bench]
-        fn bench_radix2(b: &mut Bencher) {
-            let target = core::$t::MAX / 2;
+        fn bench_into_radix2(b: &mut Bencher) {
+            let target = core::$t::MAX >> 1;
             b.iter(|| target.into_binary_digits());
+        }
+
+        #[bench]
+        fn bench_reverse_radix2(b: &mut Bencher) {
+            let target = core::$t::MAX >> 1;
+            b.iter(|| target.reverse_binary_digits());
         }
     }
 }
@@ -14,9 +20,15 @@ macro_rules! create_radix2_bench {
 macro_rules! create_radix10_bench {
     ( $t:ident ) => {
         #[bench]
-        fn bench_radix10(b: &mut Bencher) {
-            let target = core::$t::MAX / 2;
+        fn bench_into_radix10(b: &mut Bencher) {
+            let target = core::$t::MAX >> 1;
             b.iter(|| target.into_decimal_digits());
+        }
+
+        #[bench]
+        fn bench_reverse_radix10(b: &mut Bencher) {
+            let target = core::$t::MAX >> 1;
+            b.iter(|| target.reverse_decimal_digits());
         }
     }
 }
@@ -24,9 +36,15 @@ macro_rules! create_radix10_bench {
 macro_rules! create_radix16_bench {
     ( $t:ident ) => {
         #[bench]
-        fn bench_radix16(b: &mut Bencher) {
-            let target = core::$t::MAX / 2;
+        fn bench_into_radix16(b: &mut Bencher) {
+            let target = core::$t::MAX >> 1;
             b.iter(|| target.into_digits(16));
+        }
+
+        #[bench]
+        fn bench_reverse_radix16(b: &mut Bencher) {
+            let target = core::$t::MAX >> 1;
+            b.iter(|| target.reverse_digits(16));
         }
     }
 }
