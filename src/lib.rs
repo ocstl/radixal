@@ -205,8 +205,21 @@ pub trait IntoDigits: Copy + PartialOrd + Ord + WrappingAdd + WrappingMul + Unsi
     /// assert_eq!(twice_reversed, 123);
     /// ```
     fn reverse_digits(self, radix: Self) -> Result<Self, RadixError> {
-        self.into_digits(radix)
-            .map(DigitsIterator::into_reversed_number)
+        if radix == Self::zero() {
+            return Err(RadixError::Radix0);
+        } else if radix == Self::one() {
+            return Err(RadixError::Radix1);
+        }
+
+        let mut n = self;
+        let mut result = Self::zero();
+
+        while n > Self::zero() {
+            result = result.wrapping_mul(&radix).wrapping_add(&(n % radix));
+            n = n / radix;
+        }
+
+        Ok(result)
     }
 
     /// Reverse the digits under a binary number system.
