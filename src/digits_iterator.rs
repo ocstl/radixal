@@ -48,14 +48,23 @@ impl<T: IntoDigits> DigitsIterator<T> {
             return Err(RadixError::Radix1);
         }
 
-        let mut len = 1;
+        let mut len = 0;
         let mut splitter = T::one();
         let mut n = number;
 
-        while n >= radix {
+        // Iterate until we reach the middle.
+        while n >= splitter {
             len += 1;
             splitter = splitter * radix;
             n = n / radix;
+        }
+
+        if n >= splitter / radix {
+            splitter = splitter * (splitter / radix);
+            len += len;
+        } else {
+            splitter = (splitter / radix) * (splitter / radix);
+            len += len - 1;
         }
 
         Ok(DigitsIterator {
