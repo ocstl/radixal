@@ -59,11 +59,13 @@ impl<T: IntoDigits> DigitsIterator<T> {
             n = n / radix;
         }
 
-        if n >= splitter / radix {
-            splitter = splitter * (splitter / radix);
+        // Then adjust for the remainder.
+        let adjustment = splitter / radix;
+        if n >= adjustment {
+            splitter = splitter * adjustment;
             len += len;
         } else {
-            splitter = (splitter / radix) * (splitter / radix);
+            splitter = adjustment * adjustment;
             len += len - 1;
         }
 
@@ -259,6 +261,17 @@ mod tests {
         assert_eq!(digits.next_back(), Some(2));
         assert_eq!(digits.next_back(), Some(1));
         assert_eq!(digits.next_back(), None);
+    }
+
+    #[test]
+    fn test_exact_power() {
+        let mut digits = DigitsIterator::new(1000_u32, 10).unwrap();
+
+        assert_eq!(digits.next(), Some(1));
+        assert_eq!(digits.next(), Some(0));
+        assert_eq!(digits.next(), Some(0));
+        assert_eq!(digits.next(), Some(0));
+        assert_eq!(digits.next(), None);
     }
 
     #[test]
