@@ -21,7 +21,7 @@ macro_rules! create_radix2_bench {
             let reverse = target.reverse_binary_digits();
             b.iter(|| target.is_binary_permutation(reverse));
         }
-    }
+    };
 }
 
 macro_rules! create_radix10_bench {
@@ -44,7 +44,7 @@ macro_rules! create_radix10_bench {
             let reverse = target.reverse_binary_digits();
             b.iter(|| target.is_decimal_permutation(reverse));
         }
-    }
+    };
 }
 
 macro_rules! create_radix16_bench {
@@ -67,7 +67,7 @@ macro_rules! create_radix16_bench {
             let reverse = target.reverse_binary_digits();
             b.iter(|| target.is_permutation(reverse, 16));
         }
-    }
+    };
 }
 
 macro_rules! create_benches {
