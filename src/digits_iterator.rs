@@ -42,10 +42,18 @@ impl<T: IntoDigits> DigitsIterator<T> {
     /// assert_eq!(digits.unwrap_err(), RadixError::Radix1);
     /// ```
     pub fn new(number: T, radix: T) -> Result<DigitsIterator<T>, RadixError> {
+        // Handle errors (radix too small) and the special case of 0.
         if radix == T::zero() {
             return Err(RadixError::Radix0);
         } else if radix == T::one() {
             return Err(RadixError::Radix1);
+        } else if number.is_zero() {
+            return Ok(DigitsIterator {
+                current: number,
+                radix,
+                splitter: T::one(),
+                len: 1,
+            });
         }
 
         let mut len = 0;
@@ -361,5 +369,21 @@ mod tests {
 
         assert_eq!(digits.to_number(), 123);
         assert_eq!(digits.next(), Some(0));
+    }
+
+    #[test]
+    fn test_zero_is_some_then_none() {
+        let mut digits = DigitsIterator::new(0_u32, 10).unwrap();
+
+        assert_eq!(digits.next(), Some(0));
+        assert_eq!(digits.next(), None);
+    }
+
+    #[test]
+    fn test_one_is_some_then_none() {
+        let mut digits = DigitsIterator::new(1_u32, 10).unwrap();
+
+        assert_eq!(digits.next(), Some(1));
+        assert_eq!(digits.next(), None);
     }
 }
