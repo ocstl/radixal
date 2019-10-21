@@ -132,7 +132,13 @@ impl<T: IntoDigits> DigitsIterator<T> {
     /// assert_eq!(digits.rotate_left(1).to_number(), 2341);
     /// assert_eq!(digits.rotate_left(2).to_number(), 4123);
     /// ```
-    pub fn rotate_left(&mut self, mut n: usize) -> &Self {
+    pub fn rotate_left(&mut self, n: usize) -> &Self {
+        if self.len == 0 {
+            return self;
+        }
+
+        let mut n = n % self.len;
+
         while n > 0 {
             let first_digit = self.current / self.splitter;
             self.current = (self.current % self.splitter)
@@ -161,7 +167,13 @@ impl<T: IntoDigits> DigitsIterator<T> {
     /// assert_eq!(digits.rotate_right(1).to_number(), 4123);
     /// assert_eq!(digits.rotate_right(2).to_number(), 2341);
     /// ```
-    pub fn rotate_right(&mut self, mut n: usize) -> &Self {
+    pub fn rotate_right(&mut self, n: usize) -> &Self {
+        if self.len == 0 {
+            return self;
+        }
+
+        let mut n = n % self.len;
+
         while n > 0 {
             let last_digit = self.current % self.radix;
             self.current =
@@ -388,5 +400,13 @@ mod tests {
 
         assert_eq!(digits.next(), Some(1));
         assert_eq!(digits.next(), None);
+    }
+
+    #[test]
+    fn test_rotating_exhausted_iterator_doesnt_cause_panic() {
+        let mut digits = DigitsIterator::new(1_u32, 10).unwrap();
+
+        digits.next();
+        digits.rotate_left(1);
     }
 }
