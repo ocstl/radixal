@@ -42,18 +42,21 @@ impl<T: IntoDigits> DigitsIterator<T> {
     /// assert_eq!(digits.unwrap_err(), RadixError::Radix1);
     /// ```
     pub fn new(number: T, radix: T) -> Result<DigitsIterator<T>, RadixError> {
-        // Handle errors (radix too small) and the special case of 0.
+        // Handle errors (radix too small).
         if radix == T::zero() {
             return Err(RadixError::Radix0);
         } else if radix == T::one() {
             return Err(RadixError::Radix1);
-        } else if number.is_zero() {
+        }
+
+        // Handle 1 digit numbers (including 0) directly.
+        if number < radix {
             return Ok(DigitsIterator {
                 current: number,
                 radix,
                 splitter: T::one(),
                 len: 1,
-            });
+            })
         }
 
         let mut len = 0;
