@@ -89,12 +89,60 @@ impl<T: IntoDigits> DigitsIterator<T> {
     }
 
     /// Converts the `DigitsIterator` into a number.
+    ///
+    /// This method consumes the iterator; see the `to_number` method for returning the number
+    /// without consuming the iterator.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use radixal::digits_iterator::DigitsIterator;
+    ///
+    /// let number = 123_u32;
+    /// let mut digits = DigitsIterator::new(number, 10).unwrap();
+    ///
+    /// assert_eq!(digits.into_number(), 123);
+    /// ```
+    ///
+    /// ```compile_fail
+    /// use radixal::digits_iterator::DigitsIterator;
+    ///
+    /// let number = 123_u32;
+    /// let mut digits = DigitsIterator::new(number, 10).unwrap();
+    ///
+    /// assert_eq!(digits.into_number(), 123);
+    /// assert_eq!(digits.next(), Some(1));
+    /// ```
     pub fn into_number(self) -> T {
         self.current
     }
 
     /// Converts the `DigitsIterator` into a number with the digits reversed, using wrapping
     /// semantics if necessary.
+    ///
+    /// This method consumes the iterator; see the `to_reversed_number` method for returning the
+    /// reversed number without consuming the iterator.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use radixal::digits_iterator::DigitsIterator;
+    ///
+    /// let number = 123_u32;
+    /// let mut digits = DigitsIterator::new(number, 10).unwrap();
+    ///
+    /// assert_eq!(digits.into_reversed_number(), 321);
+    /// ```
+    ///
+    /// ```compile_fail
+    /// use radixal::digits_iterator::DigitsIterator;
+    ///
+    /// let number = 123_u32;
+    /// let mut digits = DigitsIterator::new(number, 10).unwrap();
+    ///
+    /// assert_eq!(digits.into_reversed_number(), 321);
+    /// assert_eq!(digits.next(), Some(1));
+    /// ```
     pub fn into_reversed_number(self) -> T {
         let radix = self.radix;
         self.rfold(T::zero(), |acc, digit| {
