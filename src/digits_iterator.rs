@@ -56,7 +56,7 @@ impl<T: IntoDigits> DigitsIterator<T> {
                 radix,
                 splitter: T::one(),
                 len: 1,
-            })
+            });
         }
 
         let mut len = 0;
