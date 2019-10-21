@@ -103,12 +103,42 @@ impl<T: IntoDigits> DigitsIterator<T> {
     }
 
     /// Returns the current number being iterated over, leaving the iterator unchanged.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use radixal::digits_iterator::DigitsIterator;
+    ///
+    /// let number = 123_u32;
+    /// let mut digits = DigitsIterator::new(number, 10).unwrap();
+    ///
+    /// assert_eq!(digits.to_number(), 123);
+    /// assert_eq!(digits.next(), Some(1));
+    /// assert_eq!(digits.next(), Some(2));
+    /// assert_eq!(digits.next(), Some(3));
+    /// assert_eq!(digits.next(), None);
+    /// ```
     pub fn to_number(&self) -> T {
         self.current
     }
 
     /// Returns the current number being iterated over with the digits reversed, leaving the
     /// iterator unchanged.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use radixal::digits_iterator::DigitsIterator;
+    ///
+    /// let number = 123_u32;
+    /// let mut digits = DigitsIterator::new(number, 10).unwrap();
+    ///
+    /// assert_eq!(digits.to_reversed_number(), 321);
+    /// assert_eq!(digits.next(), Some(1));
+    /// assert_eq!(digits.next(), Some(2));
+    /// assert_eq!(digits.next(), Some(3));
+    /// assert_eq!(digits.next(), None);
+    /// ```
     pub fn to_reversed_number(&self) -> T {
         self.clone().rfold(T::zero(), |acc, digit| {
             acc.wrapping_mul(&self.radix).wrapping_add(&digit)
