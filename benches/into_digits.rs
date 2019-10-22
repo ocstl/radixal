@@ -39,10 +39,28 @@ macro_rules! create_radix10_bench {
         }
 
         #[bench]
+        fn bench_reverse_radix10_string(b: &mut Bencher) {
+            let target = core::$t::MAX >> 1;
+            b.iter(|| target.to_string().chars().rev().collect::<String>())
+        }
+
+        #[bench]
         fn bench_permutation_radix10(b: &mut Bencher) {
             let target = core::$t::MAX / 10;
             let reverse = target.reverse_binary_digits();
             b.iter(|| target.is_decimal_permutation(reverse));
+        }
+
+        #[bench]
+        fn bench_nbr_decimal_digits(b: &mut Bencher) {
+            let target = core::$t::MAX >> 1;
+            b.iter(|| target.nbr_decimal_digits());
+        }
+
+        #[bench]
+        fn bench_nbr_decimal_digits_str_radix(b: &mut Bencher) {
+            let target = core::$t::MAX >> 1;
+            b.iter(|| target.to_string().len());
         }
     };
 }
