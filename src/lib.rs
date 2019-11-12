@@ -356,6 +356,7 @@ macro_rules! impl_digits {
                 const BINARY_RADIX: Self = 2;
                 const DECIMAL_RADIX: Self = 10;
 
+                #[cfg(feature = "std")]
                 fn is_binary_permutation(self, other: Self) -> bool {
                     self.count_ones() == other.count_ones()
                 }
