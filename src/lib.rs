@@ -290,8 +290,8 @@ pub trait IntoDigits: Copy + PartialOrd + Ord + WrappingAdd + WrappingMul + Unsi
             return Ok(false);
         }
 
-        a.sort();
-        b.sort();
+        a.sort_unstable();
+        b.sort_unstable();
         Ok(a == b)
     }
 
@@ -331,8 +331,8 @@ pub trait IntoDigits: Copy + PartialOrd + Ord + WrappingAdd + WrappingMul + Unsi
             return false;
         }
 
-        a.sort();
-        b.sort();
+        a.sort_unstable();
+        b.sort_unstable();
         a == b
     }
 
@@ -375,8 +375,8 @@ pub trait IntoDigits: Copy + PartialOrd + Ord + WrappingAdd + WrappingMul + Unsi
             return false;
         }
 
-        a.sort();
-        b.sort();
+        a.sort_unstable();
+        b.sort_unstable();
         a == b
     }
 }
