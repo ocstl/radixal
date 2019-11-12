@@ -317,23 +317,7 @@ pub trait IntoDigits: Copy + PartialOrd + Ord + WrappingAdd + WrappingMul + Unsi
     /// ```
     #[cfg(feature = "std")]
     fn is_decimal_permutation(self, other: Self) -> bool {
-        // This is reasonably efficient, but can be improved by short-circuiting.
-        let mut a: Vec<Self> = self
-            .into_decimal_digits()
-            .filter(|&n| !n.is_zero())
-            .collect();
-        let mut b: Vec<Self> = other
-            .into_decimal_digits()
-            .filter(|&n| !n.is_zero())
-            .collect();
-
-        if a.len() != b.len() {
-            return false;
-        }
-
-        a.sort_unstable();
-        b.sort_unstable();
-        a == b
+        self.is_permutation(other, Self::DECIMAL_RADIX).unwrap()
     }
 
     /// Tests if `self` and `other` are composed of the same digits under a binary radix.
@@ -361,23 +345,7 @@ pub trait IntoDigits: Copy + PartialOrd + Ord + WrappingAdd + WrappingMul + Unsi
     /// ```
     #[cfg(feature = "std")]
     fn is_binary_permutation(self, other: Self) -> bool {
-        // This is reasonably efficient, but can be improved by short-circuiting.
-        let mut a: Vec<Self> = self
-            .into_binary_digits()
-            .filter(|&n| !n.is_zero())
-            .collect();
-        let mut b: Vec<Self> = other
-            .into_binary_digits()
-            .filter(|&n| !n.is_zero())
-            .collect();
-
-        if a.len() != b.len() {
-            return false;
-        }
-
-        a.sort_unstable();
-        b.sort_unstable();
-        a == b
+        self.is_permutation(other, Self::BINARY_RADIX).unwrap()
     }
 }
 
@@ -387,6 +355,10 @@ macro_rules! impl_digits {
             impl IntoDigits for $t {
                 const BINARY_RADIX: Self = 2;
                 const DECIMAL_RADIX: Self = 10;
+
+                fn is_binary_permutation(self, other: Self) -> bool {
+                    self.count_ones() == other.count_ones()
+                }
             }
             impl IntoDigits for Wrapping<$t> {
                 const BINARY_RADIX: Self = Wrapping(2);
