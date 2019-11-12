@@ -271,6 +271,11 @@ pub trait IntoDigits: Copy + PartialOrd + Ord + WrappingAdd + WrappingMul + Unsi
     /// let m = 2100_u32;
     ///
     /// assert!(n.is_permutation(m, 10).unwrap());
+    ///
+    /// let n = 121_u32;
+    /// let m = 2100_u32;
+    ///
+    /// assert!(!n.is_permutation(m, 10).unwrap());
     /// ```
     #[cfg(feature = "std")]
     fn is_permutation(self, other: Self, radix: Self) -> Result<bool, RadixError> {
@@ -304,6 +309,11 @@ pub trait IntoDigits: Copy + PartialOrd + Ord + WrappingAdd + WrappingMul + Unsi
     /// let m = 2100_u32;
     ///
     /// assert!(n.is_decimal_permutation(m));
+    ///
+    /// let n = 121_u32;
+    /// let m = 2100_u32;
+    ///
+    /// assert!(!n.is_decimal_permutation(m));
     /// ```
     #[cfg(feature = "std")]
     fn is_decimal_permutation(self, other: Self) -> bool {
@@ -343,6 +353,11 @@ pub trait IntoDigits: Copy + PartialOrd + Ord + WrappingAdd + WrappingMul + Unsi
     /// let m = 17_u32;
     ///
     /// assert!(n.is_binary_permutation(m));
+    ///
+    /// let n = 12_u32;
+    /// let m = 7_u32;
+    ///
+    /// assert!(!n.is_binary_permutation(m));
     /// ```
     #[cfg(feature = "std")]
     fn is_binary_permutation(self, other: Self) -> bool {
