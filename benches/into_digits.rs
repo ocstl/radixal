@@ -47,7 +47,7 @@ macro_rules! create_radix10_bench {
         #[bench]
         fn bench_permutation_radix10(b: &mut Bencher) {
             let target = core::$t::MAX / 10;
-            let reverse = target.reverse_binary_digits();
+            let reverse = target.reverse_decimal_digits();
             b.iter(|| target.is_decimal_permutation(reverse));
         }
 
